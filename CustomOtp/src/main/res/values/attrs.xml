@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CustomOtpEditText">
+        <attr name="otpLength" format="integer" />
+        <attr name="customBackground" format="integer" />
+        <attr name="boxPadding" format="dimension" />
+        <attr name="boxMargin" format="dimension" />
+    </declare-styleable>
+</resources>
