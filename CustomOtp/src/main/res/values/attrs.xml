@@ -5,5 +5,7 @@
         <attr name="customBackground" format="integer" />
         <attr name="boxPadding" format="dimension" />
         <attr name="boxMargin" format="dimension" />
+        <attr name="boxWidth" format="dimension" />
+        <attr name="boxHeight" format="dimension" />
     </declare-styleable>
 </resources>

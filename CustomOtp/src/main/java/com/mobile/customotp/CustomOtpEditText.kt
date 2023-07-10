@@ -1,6 +1,7 @@
 package com.mobile.customotp
 
 import android.content.Context
+import android.graphics.Color
 import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
@@ -11,9 +12,12 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.EditText
+import androidx.constraintlayout.solver.widgets.ConstraintWidget
+import androidx.constraintlayout.helper.widget.Flow
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
+import com.google.android.material.internal.FlowLayout
 
 /**
  * @author Aashutosh kumar <aashutosh.kr.2308@gmail.com>
@@ -27,6 +31,8 @@ class CustomOtpEditText : ConstraintLayout {
     private var otpLength: Int = 6
     private var boxPadding: Float = 10F
     private var boxMargin: Float = 10F
+    private var boxHeight = 80F
+    private var boxWidth = 80F
     private val otpEditTexts = mutableListOf<EditText>()
     private var size = 0
 
@@ -60,6 +66,8 @@ class CustomOtpEditText : ConstraintLayout {
             otpLength = typedArray.getInt(R.styleable.CustomOtpEditText_otpLength, 6)
             boxPadding = typedArray.getDimension(R.styleable.CustomOtpEditText_boxPadding, 10F)
             boxMargin = typedArray.getDimension(R.styleable.CustomOtpEditText_boxMargin, 10F)
+            boxHeight = typedArray.getDimension(R.styleable.CustomOtpEditText_boxHeight, 80F)
+            boxWidth = typedArray.getDimension(R.styleable.CustomOtpEditText_boxWidth, 80F)
             setupOTPInputViews()
             typedArray.recycle()
         }
@@ -67,15 +75,42 @@ class CustomOtpEditText : ConstraintLayout {
     }
 
     private fun setupOTPInputViews() {
-        val constraintSet = ConstraintSet()
-        constraintSet.clone(this)
+        val flow = Flow(context).apply {
+            id = generateViewId()
+            setWrapMode(Flow.WRAP_CHAIN)
+            setHorizontalStyle(Flow.CHAIN_PACKED)
+            setHorizontalAlign(Flow.HORIZONTAL_ALIGN_CENTER)
+            setHorizontalBias(0f)
+            setHorizontalGap(10)
+            setOrientation(Flow.HORIZONTAL)
+            setBackgroundColor(Color.CYAN)
+            layoutParams = LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
+        }
+
+        val constraintSet = ConstraintSet().apply {
+//            clone(this@CustomOtpEditText)
+            clear(flow.id, ConstraintSet.END)
+            clear(flow.id, ConstraintSet.START)
+            clear(flow.id, ConstraintSet.BOTTOM)
+            clear(flow.id, ConstraintSet.TOP)
+            connect(flow.id, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
+            connect(flow.id, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
+            connect(flow.id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
+            connect(flow.id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
+        }
+
+        constraintSet.applyTo(this)
+        addView(flow)
+
+        val referenceIds = IntArray(otpLength)
+
         for (i in 0 until otpLength) {
             val editText = EditText(context)
             editText.id = View.generateViewId()
             editText.inputType = InputType.TYPE_CLASS_NUMBER
             editText.gravity = Gravity.CENTER
             editText.tag = i
-            editText.layoutParams = LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+            editText.layoutParams = LayoutParams(boxWidth.toInt(), boxHeight.toInt())
             editText.setPadding(
                 boxPadding.toInt(),
                 boxPadding.toInt(),
@@ -130,55 +165,12 @@ class CustomOtpEditText : ConstraintLayout {
 
             otpEditTexts.add(editText)
             addView(editText)
+            referenceIds[i] = editText.id
 
-            constraintSet.connect(
-                editText.id,
-                ConstraintSet.START,
-                ConstraintSet.PARENT_ID,
-                ConstraintSet.START
-            )
-            constraintSet.connect(
-                editText.id,
-                ConstraintSet.END,
-                ConstraintSet.PARENT_ID,
-                ConstraintSet.END
-            )
-            constraintSet.constrainWidth(editText.id, MATCH_PARENT)
-            constraintSet.constrainHeight(editText.id, ConstraintSet.WRAP_CONTENT)
-            if (i == 0) {
-                constraintSet.connect(
-                    editText.id,
-                    ConstraintSet.TOP,
-                    ConstraintSet.PARENT_ID,
-                    ConstraintSet.TOP
-                )
-            } else {
-                constraintSet.connect(
-                    editText.id,
-                    ConstraintSet.TOP,
-                    getChildAt(i - 1).id,
-                    ConstraintSet.BOTTOM
-                )
-            }
         }
-        constraintSet.connect(
-            getChildAt(0).id,
-            ConstraintSet.TOP,
-            ConstraintSet.PARENT_ID,
-            ConstraintSet.TOP
-        )
 
-        constraintSet.createVerticalChain(
-            ConstraintSet.PARENT_ID,
-            ConstraintSet.TOP,
-            ConstraintSet.PARENT_ID,
-            ConstraintSet.BOTTOM,
-            IntArray(otpLength),
-            FloatArray(otpLength),
-            ConstraintSet.CHAIN_PACKED
-        )
-
-        constraintSet.applyTo(this)
+        flow.referencedIds = referenceIds
+        post { requestLayout() }
     }
 
     private fun focusNextEditText() {
@@ -186,17 +178,10 @@ class CustomOtpEditText : ConstraintLayout {
             val editText = otpEditTexts[i]
             if (editText.text.isBlank()) {
                 editText.requestFocus()
-//                size = i
                 return
             }
         }
     }
-
-    fun getFocusedEditText(): EditText? {
-        val focusedView = findViewWithTag<View>(1)
-        return focusedView as? EditText
-    }
-
 
     fun getOTP(): String {
         val otpBuilder = StringBuilder()

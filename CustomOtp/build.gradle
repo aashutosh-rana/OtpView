@@ -22,7 +22,7 @@ publishing {
     }
     repositories {
         maven {
-            name = "GitHubPackages"
+            name = "OtpView"
             url = uri("https://maven.pkg.github.com/GITHUB_USERID/REPOSITORY")
             credentials {
                 username = githubProperties['gpr.usr'] ?: System.getenv("GPR_USER")
